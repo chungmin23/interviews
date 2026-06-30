@@ -26,7 +26,8 @@ export default function Home() {
   }
   function toResume() {
     const doc: SavedDoc = { id: nanoid(8), title: `${kind==="master"?"맞춤":"일반"} 이력서`, kind,
-      createdAt: new Date().toISOString(), jobPosting: jd, analysis, resumeMd: null, interviewMd: null };
+      createdAt: new Date().toISOString(), jobPosting: jd, analysis, resumeMd: null, interviewMd: null,
+      sourceResume: resume };
     upsertDoc(doc); r.push(`/resume/${doc.id}`);
   }
   return (

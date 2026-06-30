@@ -22,6 +22,16 @@ export default function ResumePage({ params }: { params: Promise<{ id: string }>
     timer.current = setTimeout(() => upsertDoc(next), 500);
   }
 
+  async function interview() {
+    if (!doc) return;
+    const text = doc.resumeMd || doc.sourceResume;
+    if (!text) { alert("이력서 텍스트가 없어요."); return; }
+    setBusy(true); let acc = "";
+    try { await postStream("/api/interview", { resumeText: text }, (t)=>{ acc += t; save({ ...doc, interviewMd: acc }); }); }
+    catch (e) { alert("추출 실패: " + (e as Error).message); }
+    finally { setBusy(false); }
+  }
+
   async function generate() {
     if (!doc) return;
     const master = getMaster();
@@ -59,7 +69,7 @@ export default function ResumePage({ params }: { params: Promise<{ id: string }>
             </button>
           )}
           {doc.resumeMd && <button className="border px-3 py-1 rounded text-sm" onClick={() => window.print()}>PDF 출력</button>}
-          {/* 면접질문 버튼은 Task 13에서 추가 */}
+          <button className="border px-3 py-1 rounded text-sm" onClick={interview} disabled={busy}>면접질문 추출</button>
         </div>
         {doc.resumeMd != null
           ? <MarkdownEditor value={doc.resumeMd} onChange={(v) => save({ ...doc, resumeMd: v })} />
@@ -75,6 +85,7 @@ export default function ResumePage({ params }: { params: Promise<{ id: string }>
             </div>
           )}
         {doc.resumeMd && <PrintResume md={doc.resumeMd} />}
+        {doc.interviewMd && <section className="mt-4 border-t pt-3"><h2 className="font-bold mb-2">면접 예상 질문</h2><MarkdownView md={doc.interviewMd} /></section>}
       </main>
     </div>
   );
