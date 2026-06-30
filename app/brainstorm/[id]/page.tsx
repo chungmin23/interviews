@@ -8,13 +8,15 @@ import { postStream } from "@/lib/client";
 import { getBrainstorm, upsertBrainstorm, appendMaster } from "@/lib/storage";
 import type { Brainstorm, ChatMsg } from "@/lib/types";
 
-// STAR로 정리된 메시지에서 이력서에 넣을 본문만 추출. 정리본이 아니면 null.
+// '이력서용 정리'(문제·해결·결과) 블록이 있을 때만 그 부분을 추출. 없으면 null → 버튼 숨김.
 function extractSummary(content: string): string | null {
-  if (!/상황\s*\(S\)/.test(content) || !/결과\s*\(R\)/.test(content)) return null;
-  const idx = content.indexOf("###");
-  const block = (idx >= 0 ? content.slice(idx) : content)
+  const mi = content.indexOf("이력서용 정리");
+  if (mi < 0) return null;
+  const after = content.slice(mi);
+  const hi = after.indexOf("###"); // 정리 블록의 제목부터
+  const block = (hi >= 0 ? after.slice(hi) : after)
     .split("\n")
-    .filter((l) => !l.includes("마스터 이력서에 추가")) // AI의 "추가할까요?" 안내 줄 제거
+    .filter((l) => !l.includes("마스터 이력서에 추가") && !l.includes("추가할까요"))
     .join("\n")
     .trim();
   return block || null;
