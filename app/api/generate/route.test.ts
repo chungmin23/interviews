@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from "vitest";
 vi.mock("@/lib/openai", () => ({
   streamChat: vi.fn(async () => new ReadableStream({ start(c){ c.enqueue(new TextEncoder().encode("# 이력서")); c.close(); } })),
+  modelFor: vi.fn(() => "test-model"),
 }));
 import { POST } from "./route";
 import { __reset } from "@/lib/ratelimit";
