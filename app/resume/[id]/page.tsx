@@ -1,91 +1,98 @@
 "use client";
 import { use, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
-import MarkdownEditor from "@/components/MarkdownEditor";
+import DocHeader from "@/components/DocHeader";
 import MarkdownView from "@/components/MarkdownView";
-import { getDoc, upsertDoc, getMaster } from "@/lib/storage";
+import { useUI } from "@/components/UIProvider";
+import { useDoc } from "@/lib/useDoc";
 import { postStream } from "@/lib/client";
-import type { SavedDoc } from "@/lib/types";
-import PrintResume from "@/components/PrintResume";
 
-export default function ResumePage({ params }: { params: Promise<{ id: string }> }) {
+export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [doc, setDoc] = useState<SavedDoc | null>(null);
+  const ui = useUI();
+  const { doc, save, saveState } = useDoc(id);
   const [busy, setBusy] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const autorunRef = useRef(false);
 
-  useEffect(() => { setDoc(getDoc(id) ?? null); }, [id]);
-
-  function save(next: SavedDoc) {
-    setDoc(next);
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => upsertDoc(next), 500);
-  }
-
-  async function interview() {
+  async function runAnalysis(skipConfirm = false) {
     if (!doc) return;
-    const text = doc.resumeMd || doc.sourceResume;
-    if (!text) { alert("이력서 텍스트가 없어요."); return; }
-    setBusy(true); let acc = "";
-    try { await postStream("/api/interview", { resumeText: text }, (t)=>{ acc += t; save({ ...doc, interviewMd: acc }); }); }
-    catch (e) { alert("추출 실패: " + (e as Error).message); }
-    finally { setBusy(false); }
-  }
-
-  async function generate() {
-    if (!doc) return;
-    const master = getMaster();
-    if (!master) { alert("마스터 이력서가 없어요. 홈에서 마스터 이력서로 분석하세요."); return; }
+    if (!doc.sourceResume || !doc.jobPosting) { ui.toast("원본 이력서·공고가 없어 분석할 수 없어요.", "error"); return; }
+    if (!skipConfirm && doc.analysis && !(await ui.confirm("기존 분석 결과를 새로 생성한 결과로 대체해요.\n계속할까요?"))) return;
     setBusy(true); let acc = "";
     try {
       await postStream(
-        "/api/generate",
-        { masterResume: master.text, jobPosting: doc.jobPosting, analysis: doc.analysis },
-        (t) => { acc += t; save({ ...doc, resumeMd: acc }); }
+        "/api/analyze",
+        { resumeText: doc.sourceResume, jobPosting: doc.jobPosting },
+        (t) => { acc += t; save({ ...doc, analysis: acc }); }
       );
-    } catch (e) { alert("생성 실패: " + (e as Error).message); }
-    finally { setBusy(false); }
+    } catch (e) {
+      ui.toast((e as Error).message === "RATE_LIMITED" ? "오늘 사용 한도를 초과했어요." : "분석 실패: " + (e as Error).message, "error");
+    } finally { setBusy(false); }
   }
 
-  if (!doc) return <div className="p-6">문서를 찾을 수 없어요.</div>;
+  // 홈에서 "분석하기"로 넘어온 경우 자동 실행
+  useEffect(() => {
+    if (!doc || autorunRef.current) return;
+    if (typeof window !== "undefined" && sessionStorage.getItem(`run-${doc.id}`) === "1") {
+      sessionStorage.removeItem(`run-${doc.id}`);
+      autorunRef.current = true;
+      if (!doc.analysis) runAnalysis(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc]);
+
+  if (doc === undefined) return <div className="p-8 text-sm text-gray-400">불러오는 중…</div>;
+  if (!doc) return (
+    <div className="p-8 space-y-3">
+      <p className="text-gray-600">문서를 찾을 수 없어요.</p>
+      <Link href="/" className="btn btn-outline-accent">← 새 분석으로 이동</Link>
+    </div>
+  );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
       <Sidebar />
-      <main className="flex-1 p-6 space-y-3">
-        <div className="flex items-center gap-2">
-          <input
-            className="border px-2 py-1 text-sm font-bold"
-            value={doc.title}
-            onChange={(e) => save({ ...doc, title: e.target.value })}
-          />
-          {doc.kind === "master" && (
-            <button
-              className="bg-accent text-white px-3 py-1 rounded text-sm"
-              onClick={generate}
-              disabled={busy}
-            >
-              {busy ? "생성 중…" : doc.resumeMd ? "재생성" : "맞춤 이력서 생성"}
+      <main className="flex-1 p-4 md:p-8 max-w-3xl space-y-4">
+        <DocHeader doc={doc} onTitle={(v) => save({ ...doc, title: v })} saveState={saveState} />
+
+        <section className="card">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2>분석 결과</h2>
+            <button className="btn btn-ghost btn-sm" onClick={() => runAnalysis()} disabled={busy}>
+              {busy ? "분석 중…" : doc.analysis ? "재분석" : "분석하기"}
             </button>
-          )}
-          {doc.resumeMd && <button className="border px-3 py-1 rounded text-sm" onClick={() => window.print()}>PDF 출력</button>}
-          <button className="border px-3 py-1 rounded text-sm" onClick={interview} disabled={busy}>면접질문 추출</button>
-        </div>
-        {doc.resumeMd != null
-          ? <MarkdownEditor value={doc.resumeMd} onChange={(v) => save({ ...doc, resumeMd: v })} />
-          : (
-            <div className="text-sm text-gray-500">
-              아직 이력서가 없습니다.{" "}
-              {doc.kind === "master"
-                ? "[맞춤 이력서 생성]을 누르세요."
-                : "일반 이력서는 분석만 제공합니다."}
-              <div className="mt-3 border-t pt-3">
-                <MarkdownView md={doc.analysis} />
-              </div>
+          </div>
+          {busy && !doc.analysis ? (
+            <div className="space-y-2 animate-pulse" aria-hidden>
+              <p className="text-sm text-gray-400">AI가 분석 중…</p>
+              <div className="h-3 w-3/4 rounded bg-gray-200" />
+              <div className="h-3 w-full rounded bg-gray-200" />
+              <div className="h-3 w-5/6 rounded bg-gray-200" />
             </div>
+          ) : doc.analysis ? (
+            <MarkdownView md={doc.analysis} />
+          ) : (
+            <p className="text-sm text-gray-500">분석 결과가 없습니다. [분석하기]를 눌러 생성하세요.</p>
           )}
-        {doc.resumeMd && <PrintResume md={doc.resumeMd} />}
-        {doc.interviewMd && <section className="mt-4 border-t pt-3"><h2 className="font-bold mb-2">면접 예상 질문</h2><MarkdownView md={doc.interviewMd} /></section>}
+        </section>
+
+        {doc.jobPosting && (
+          <details className="card">
+            <summary className="cursor-pointer text-sm font-medium text-gray-700">채용공고 원문 보기</summary>
+            <pre className="mt-3 whitespace-pre-wrap text-xs text-gray-600">{doc.jobPosting}</pre>
+          </details>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          {doc.kind === "master" ? (
+            <Link href={`/resume/${doc.id}/write`} className="btn btn-primary">
+              맞춤 이력서 작성하러 가기 →
+            </Link>
+          ) : (
+            <p className="help">일반 이력서는 분석만 제공돼요.</p>
+          )}
+        </div>
       </main>
     </div>
   );
