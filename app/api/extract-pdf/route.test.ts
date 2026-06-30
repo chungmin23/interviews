@@ -4,7 +4,7 @@ import { POST } from "./route";
 
 function form(bytes: Uint8Array) {
   const fd = new FormData();
-  fd.append("file", new Blob([bytes], { type: "application/pdf" }), "r.pdf");
+  fd.append("file", new Blob([bytes as unknown as ArrayBuffer], { type: "application/pdf" }), "r.pdf");
   return new Request("http://x", { method: "POST", body: fd });
 }
 

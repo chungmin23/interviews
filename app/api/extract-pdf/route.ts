@@ -1,4 +1,5 @@
-import pdf from "pdf-parse";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdf = (require("pdf-parse") as { default: (buf: Buffer) => Promise<{ text: string }> }).default;
 
 // Helper to check if value is a Blob-like object (handles cross-context issues in Node.js)
 function isBlob(value: any): value is Blob {
