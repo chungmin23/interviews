@@ -28,16 +28,6 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
   const { doc, save, saveState } = useDoc(id);
   const [busy, setBusy] = useState(false);
 
-  async function interview() {
-    if (!doc) return;
-    const text = doc.resumeMd || doc.sourceResume;
-    if (!text) { ui.toast("이력서 텍스트가 없어요.", "error"); return; }
-    setBusy(true); let acc = "";
-    try { await postStream("/api/interview", { resumeText: text }, (t) => { acc += t; save({ ...doc, interviewMd: acc }); }); }
-    catch (e) { ui.toast("면접질문 추출 실패: " + (e as Error).message, "error"); }
-    finally { setBusy(false); }
-  }
-
   async function review() {
     if (!doc) return;
     if (!doc.resumeMd) { ui.toast("먼저 맞춤 이력서를 생성하세요.", "error"); return; }
@@ -88,9 +78,6 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
           {doc.resumeMd && (
             <button className="btn btn-ghost btn-sm" onClick={review} disabled={busy}>맞춤 이력서 검토</button>
           )}
-          {(doc.resumeMd || doc.sourceResume) && (
-            <button className="btn btn-ghost btn-sm" onClick={interview} disabled={busy}>면접질문 추출</button>
-          )}
           {doc.resumeMd && (
             <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>PDF 출력</button>
           )}
@@ -131,12 +118,6 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
             <h2 className="mb-2">맞춤 이력서 검토 (검토자 시뮬레이션)</h2>
             <p className="help mb-2">생성된 맞춤 이력서를 공고와 비교해 "이 서류가 통과할지"를 1차 심사관 관점으로 진단해요.</p>
             <MarkdownView md={doc.reviewMd} />
-          </section>
-        )}
-        {doc.interviewMd && (
-          <section className="card">
-            <h2 className="mb-2">면접 예상 질문</h2>
-            <MarkdownView md={doc.interviewMd} />
           </section>
         )}
       </main>

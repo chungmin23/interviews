@@ -57,7 +57,8 @@ export default function Sidebar() {
             const base = `/resume/${d.id}`;
             const onAnalysis = pathname === base;
             const onWrite = pathname === `${base}/write`;
-            const inProject = onAnalysis || onWrite;
+            const onInterview = pathname === `${base}/interview`;
+            const inProject = onAnalysis || onWrite || onInterview;
             return (
               <li key={d.id}>
                 {/* 프로젝트 헤더 */}
@@ -79,6 +80,7 @@ export default function Sidebar() {
                 <ul className="ml-3 mt-0.5 space-y-0.5 border-l border-gray-200 pl-2">
                   <li><Link href={base} className={subClass(onAnalysis)}>1. 분석</Link></li>
                   <li><Link href={`${base}/write`} className={subClass(onWrite)}>2. 이력서 작성</Link></li>
+                  <li><Link href={`${base}/interview`} className={subClass(onInterview)}>3. 면접 질문</Link></li>
                 </ul>
               </li>
             );
