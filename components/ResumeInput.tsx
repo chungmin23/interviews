@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { extractPdf, extractImage } from "@/lib/client";
-import { getMaster } from "@/lib/storage";
+import { getMaster, getGeneral } from "@/lib/storage";
 import { useUI } from "@/components/UIProvider";
 import type { DocKind } from "@/lib/types";
 
@@ -23,18 +23,13 @@ export default function ResumeInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 종류 전환: 마스터=저장본 자동 채움 / 일반=직접 붙여넣도록 비움(직접 입력한 텍스트는 보존)
+  // 종류 전환: 각 종류의 저장된 이력서를 불러온다(없으면 빈칸).
   function selectKind(k: DocKind) {
     setKind(k);
-    const m = getMaster();
-    if (k === "master") {
-      if (m?.text) { setText(m.text); setPrefilled(true); onChange(m.text, "master"); return; }
-      setPrefilled(false); onChange(text, "master");
-    } else {
-      if (prefilled && m?.text && text === m.text) { setText(""); onChange("", "general"); }
-      else onChange(text, "general");
-      setPrefilled(false);
-    }
+    const saved = k === "master" ? getMaster() : getGeneral();
+    setText(saved?.text ?? "");
+    setPrefilled(!!saved?.text);
+    onChange(saved?.text ?? "", k);
   }
 
   async function onFile(f: File) {
@@ -72,8 +67,8 @@ export default function ResumeInput({
           </span>
         </label>
       </div>
-      {prefilled && kind === "master" && (
-        <p className="help">저장된 마스터 이력서를 불러왔어요. 수정하려면 <a href="/master" className="text-accent hover:underline">내 이력서</a>에서 관리하세요.</p>
+      {prefilled && (
+        <p className="help">저장된 {kind === "master" ? "마스터" : "일반"} 이력서를 불러왔어요. 수정하려면 <a href="/master" className="text-accent hover:underline">내 이력서</a>에서 관리하세요.</p>
       )}
       <textarea
         className={`field h-48 resize-y ${invalid ? "field-invalid" : ""}`}

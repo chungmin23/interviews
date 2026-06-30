@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import ResumeInput from "@/components/ResumeInput";
 import JobPostingInput from "@/components/JobPostingInput";
 import Sidebar from "@/components/Sidebar";
-import { setMaster, upsertDoc } from "@/lib/storage";
+import { setMaster, setGeneral, upsertDoc } from "@/lib/storage";
 import type { DocKind, SavedDoc } from "@/lib/types";
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
     setTouched(true);
     if (!resume || !jd) { setMsg("이력서와 공고를 모두 입력하세요."); return; }
     setMsg("");
-    if (kind === "master") setMaster(resume);
+    if (kind === "master") setMaster(resume); else setGeneral(resume);
     const doc: SavedDoc = {
       id: nanoid(8), title: `${kind === "master" ? "맞춤" : "일반"} 이력서`, kind,
       createdAt: new Date().toISOString(), jobPosting: jd, analysis: "",

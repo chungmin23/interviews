@@ -1,6 +1,7 @@
 import type { SavedDoc, MasterResume } from "./types";
 const DOCS = "resume-app:documents";
 const MASTER = "resume-app:masterResume";
+const GENERAL = "resume-app:generalResume";
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -21,3 +22,5 @@ export function upsertDoc(doc: SavedDoc) {
 export function deleteDoc(id: string) { write(DOCS, listDocs().filter(d => d.id !== id)); }
 export function getMaster(): MasterResume | null { return read<MasterResume | null>(MASTER, null); }
 export function setMaster(text: string) { write(MASTER, { text, updatedAt: new Date().toISOString() }); }
+export function getGeneral(): MasterResume | null { return read<MasterResume | null>(GENERAL, null); }
+export function setGeneral(text: string) { write(GENERAL, { text, updatedAt: new Date().toISOString() }); }
