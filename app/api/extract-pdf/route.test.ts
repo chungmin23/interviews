@@ -1,5 +1,11 @@
 import { expect, test, vi } from "vitest";
-vi.mock("pdf-parse", () => ({ default: vi.fn(async () => ({ text: "hello pdf" })) }));
+vi.mock("pdf-parse", () => {
+  class PDFParse {
+    async getText() { return { text: "hello pdf" }; }
+    async destroy() {}
+  }
+  return { PDFParse };
+});
 import { POST } from "./route";
 
 function form(bytes: Uint8Array) {
