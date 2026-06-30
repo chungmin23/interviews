@@ -10,6 +10,7 @@ import { useUI } from "@/components/UIProvider";
 import { useDoc } from "@/lib/useDoc";
 import { getMaster } from "@/lib/storage";
 import { postStream } from "@/lib/client";
+import { copyText, downloadText, safeFilename } from "@/lib/download";
 
 const SEP = "===SELECTION_REASON===";
 // 스트림을 이력서 본문과 선택 이유로 분리. 구분자가 토막나 들어와도 깜빡임 없이 처리.
@@ -80,6 +81,12 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
           )}
           {doc.resumeMd && (
             <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>PDF 출력</button>
+          )}
+          {doc.resumeMd && (
+            <button className="btn btn-ghost btn-sm" onClick={async () => { if (await copyText(doc.resumeMd!)) ui.toast("복사했어요.", "success"); else ui.toast("복사 실패", "error"); }}>복사</button>
+          )}
+          {doc.resumeMd && (
+            <button className="btn btn-ghost btn-sm" onClick={() => downloadText(`${safeFilename(doc.title)}.md`, doc.resumeMd!)}>.md 다운로드</button>
           )}
         </div>
 
