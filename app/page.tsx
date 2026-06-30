@@ -22,7 +22,7 @@ export default function Home() {
     const doc: SavedDoc = {
       id: nanoid(8), title: `${kind === "master" ? "맞춤" : "일반"} 이력서`, kind,
       createdAt: new Date().toISOString(), jobPosting: jd, analysis: "",
-      resumeMd: null, interviewMd: null, selectionReason: null, sourceResume: resume,
+      resumeMd: null, interviewMd: null, selectionReason: null, reviewMd: null, sourceResume: resume,
     };
     upsertDoc(doc);
     sessionStorage.setItem(`run-${doc.id}`, "1"); // 분석 페이지에서 자동 실행 신호

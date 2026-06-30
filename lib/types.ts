@@ -4,6 +4,7 @@ export type SavedDoc = {
   jobPosting: string; analysis: string;
   resumeMd: string | null; interviewMd: string | null;
   selectionReason: string | null;
+  reviewMd: string | null;
   sourceResume: string;
 };
 export type MasterResume = { text: string; updatedAt: string };

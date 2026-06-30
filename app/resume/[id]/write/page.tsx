@@ -38,6 +38,15 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
     finally { setBusy(false); }
   }
 
+  async function review() {
+    if (!doc) return;
+    if (!doc.resumeMd) { ui.toast("먼저 맞춤 이력서를 생성하세요.", "error"); return; }
+    setBusy(true); let acc = "";
+    try { await postStream("/api/review", { resumeText: doc.resumeMd, jobPosting: doc.jobPosting }, (t) => { acc += t; save({ ...doc, reviewMd: acc }); }); }
+    catch (e) { ui.toast("검토 실패: " + (e as Error).message, "error"); }
+    finally { setBusy(false); }
+  }
+
   async function generate() {
     if (!doc) return;
     if (doc.resumeMd && !(await ui.confirm("기존에 작성·편집한 이력서 내용이 새 결과로 덮어쓰여요.\n계속할까요?"))) return;
@@ -76,6 +85,9 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
               {busy ? "생성 중…" : doc.resumeMd ? "맞춤 이력서 재생성" : "맞춤 이력서 생성"}
             </button>
           )}
+          {doc.resumeMd && (
+            <button className="btn btn-ghost btn-sm" onClick={review} disabled={busy}>맞춤 이력서 검토</button>
+          )}
           {(doc.resumeMd || doc.sourceResume) && (
             <button className="btn btn-ghost btn-sm" onClick={interview} disabled={busy}>면접질문 추출</button>
           )}
@@ -112,6 +124,13 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
             <h2 className="mb-2">이 경험을 선택한 이유</h2>
             <p className="help mb-2">공고 요건과 마스터 이력서를 매칭해 위 경험을 고른 근거예요. (이력서/PDF에는 포함되지 않아요)</p>
             <MarkdownView md={doc.selectionReason} />
+          </section>
+        )}
+        {doc.reviewMd && (
+          <section className="card">
+            <h2 className="mb-2">맞춤 이력서 검토 (검토자 시뮬레이션)</h2>
+            <p className="help mb-2">생성된 맞춤 이력서를 공고와 비교해 "이 서류가 통과할지"를 1차 심사관 관점으로 진단해요.</p>
+            <MarkdownView md={doc.reviewMd} />
           </section>
         )}
         {doc.interviewMd && (

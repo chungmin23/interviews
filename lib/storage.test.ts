@@ -4,7 +4,7 @@ import type { SavedDoc } from "./types";
 
 const make = (id: string): SavedDoc => ({
   id, title: "t", kind: "general", createdAt: "2026-06-16",
-  jobPosting: "jd", analysis: "a", resumeMd: null, interviewMd: null, selectionReason: null, sourceResume: "",
+  jobPosting: "jd", analysis: "a", resumeMd: null, interviewMd: null, selectionReason: null, reviewMd: null, sourceResume: "",
 });
 
 beforeEach(() => localStorage.clear());
