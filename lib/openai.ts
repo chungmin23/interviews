@@ -32,6 +32,25 @@ export function modelFor(task: Task): string {
   return override || tier[TASK_TIER[task]]();
 }
 
+/** 이미지(data URL)에서 텍스트를 그대로 추출(OCR). 비전 모델 사용. */
+export async function extractImageText(dataUrl: string): Promise<string> {
+  const completion = await client.chat.completions.create({
+    model: process.env.OPENAI_MODEL_VISION ?? "gpt-4o-mini",
+    temperature: 0,
+    max_tokens: 4000,
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "이미지에 있는 텍스트를 그대로 추출해줘. 표·불릿·줄바꿈 등 구조를 최대한 보존하고, 설명이나 요약 없이 본문 텍스트만 출력해." },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+  });
+  return completion.choices[0]?.message?.content ?? "";
+}
+
 export async function streamChat(
   system: string,
   user: string,

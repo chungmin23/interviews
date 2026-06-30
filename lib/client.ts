@@ -15,6 +15,12 @@ export async function extractPdf(file: File): Promise<string> {
   if (!res.ok) throw new Error(await res.text());
   return (await res.json()).text;
 }
+export async function extractImage(file: File): Promise<string> {
+  const fd = new FormData(); fd.append("file", file);
+  const res = await fetch("/api/extract-image", { method: "POST", body: fd });
+  if (!res.ok) throw new Error(await res.text());
+  return (await res.json()).text;
+}
 export async function fetchJob(url: string): Promise<string> {
   const res = await fetch("/api/fetch-job", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) });
   if (!res.ok) throw new Error(await res.text());

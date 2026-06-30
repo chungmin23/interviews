@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { fetchJob } from "@/lib/client";
+import { fetchJob, extractImage } from "@/lib/client";
 import { useUI } from "@/components/UIProvider";
 export default function JobPostingInput({ onChange, invalid }: { onChange: (t: string) => void; invalid?: boolean }) {
   const ui = useUI();
@@ -10,6 +10,15 @@ export default function JobPostingInput({ onChange, invalid }: { onChange: (t: s
     setBusy(true);
     try { const t = await fetchJob(url); setText(t); onChange(t); }
     catch { ui.toast("링크에서 공고를 못 가져왔어요(로그인 필요 등). 공고 전문을 붙여넣어 주세요.", "error"); }
+    finally { setBusy(false); }
+  }
+  async function onImage(f: File) {
+    setBusy(true);
+    try {
+      const t = await extractImage(f);
+      const next = text ? `${text}\n${t}` : t;
+      setText(next); onChange(next);
+    } catch { ui.toast("이미지에서 텍스트를 못 읽었어요.", "error"); }
     finally { setBusy(false); }
   }
   return (
@@ -28,6 +37,12 @@ export default function JobPostingInput({ onChange, invalid }: { onChange: (t: s
         onChange={(e)=>{setText(e.target.value);onChange(e.target.value);}}
         aria-label="공고 본문"
       />
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <label className="text-gray-600">공고 이미지(스크린샷)
+          <input type="file" accept="image/*" onChange={(e)=>e.target.files?.[0]&&onImage(e.target.files[0])} className="ml-1" aria-label="공고 이미지 업로드"/>
+        </label>
+        {busy && <span className="help">이미지 읽는 중…</span>}
+      </div>
     </div>
   );
 }
