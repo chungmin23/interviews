@@ -6,6 +6,7 @@ import MarkdownView from "@/components/MarkdownView";
 import { getDoc, upsertDoc, getMaster } from "@/lib/storage";
 import { postStream } from "@/lib/client";
 import type { SavedDoc } from "@/lib/types";
+import PrintResume from "@/components/PrintResume";
 
 export default function ResumePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -57,7 +58,8 @@ export default function ResumePage({ params }: { params: Promise<{ id: string }>
               {busy ? "생성 중…" : doc.resumeMd ? "재생성" : "맞춤 이력서 생성"}
             </button>
           )}
-          {/* PDF·면접질문 버튼은 Task 11, 13에서 추가 */}
+          {doc.resumeMd && <button className="border px-3 py-1 rounded text-sm" onClick={() => window.print()}>PDF 출력</button>}
+          {/* 면접질문 버튼은 Task 13에서 추가 */}
         </div>
         {doc.resumeMd != null
           ? <MarkdownEditor value={doc.resumeMd} onChange={(v) => save({ ...doc, resumeMd: v })} />
@@ -72,6 +74,7 @@ export default function ResumePage({ params }: { params: Promise<{ id: string }>
               </div>
             </div>
           )}
+        {doc.resumeMd && <PrintResume md={doc.resumeMd} />}
       </main>
     </div>
   );

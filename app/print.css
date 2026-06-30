@@ -1,0 +1,11 @@
+.print-area { display: none; }
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { display: block; position: absolute; inset: 0; padding: 12mm; }
+  @page { size: A4; margin: 12mm; }
+  .print-area h1 { font-size: 20pt; }
+  .print-area h2 { color: #16478f; border-bottom: 1px solid #ddd; font-size: 13pt; margin-top: 14px; }
+  .print-area strong { color: #1a1a1a; }
+  .print-area :is(h1,h2,h3,li,p) { page-break-inside: avoid; }
+}
