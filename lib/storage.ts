@@ -1,7 +1,8 @@
-import type { SavedDoc, MasterResume } from "./types";
+import type { SavedDoc, MasterResume, Brainstorm } from "./types";
 const DOCS = "resume-app:documents";
 const MASTER = "resume-app:masterResume";
 const GENERAL = "resume-app:generalResume";
+const BRAINSTORMS = "resume-app:brainstorms";
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -24,3 +25,17 @@ export function getMaster(): MasterResume | null { return read<MasterResume | nu
 export function setMaster(text: string) { write(MASTER, { text, updatedAt: new Date().toISOString() }); }
 export function getGeneral(): MasterResume | null { return read<MasterResume | null>(GENERAL, null); }
 export function setGeneral(text: string) { write(GENERAL, { text, updatedAt: new Date().toISOString() }); }
+
+/** 브레인스토밍으로 정리한 경험을 마스터 이력서 풀에 덧붙인다. */
+export function appendMaster(text: string) {
+  const base = getMaster()?.text ?? "";
+  setMaster(base.trim() ? `${base.trimEnd()}\n\n${text.trim()}` : text.trim());
+}
+
+export function listBrainstorms(): Brainstorm[] { return read<Brainstorm[]>(BRAINSTORMS, []); }
+export function getBrainstorm(id: string) { return listBrainstorms().find(b => b.id === id); }
+export function upsertBrainstorm(b: Brainstorm) {
+  const rest = listBrainstorms().filter(x => x.id !== b.id);
+  write(BRAINSTORMS, [b, ...rest]);
+}
+export function deleteBrainstorm(id: string) { write(BRAINSTORMS, listBrainstorms().filter(b => b.id !== id)); }

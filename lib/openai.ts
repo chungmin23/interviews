@@ -51,9 +51,10 @@ export async function extractImageText(dataUrl: string): Promise<string> {
   return completion.choices[0]?.message?.content ?? "";
 }
 
-export async function streamChat(
-  system: string,
-  user: string,
+export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+export async function streamMessages(
+  messages: ChatMessage[],
   opts?: { model?: string; maxTokens?: number; temperature?: number },
 ): Promise<ReadableStream<Uint8Array>> {
   const completion = await client.chat.completions.create({
@@ -61,10 +62,7 @@ export async function streamChat(
     stream: true,
     temperature: opts?.temperature ?? 0.4,
     max_tokens: opts?.maxTokens ?? MAX_TOKENS(),
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: user },
-    ],
+    messages,
   });
 
   const encoder = new TextEncoder();
@@ -77,4 +75,12 @@ export async function streamChat(
       controller.close();
     },
   });
+}
+
+export async function streamChat(
+  system: string,
+  user: string,
+  opts?: { model?: string; maxTokens?: number; temperature?: number },
+): Promise<ReadableStream<Uint8Array>> {
+  return streamMessages([{ role: "system", content: system }, { role: "user", content: user }], opts);
 }

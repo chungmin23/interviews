@@ -7,3 +7,7 @@ export type SavedDoc = {
   sourceResume: string;
 };
 export type MasterResume = { text: string; updatedAt: string };
+
+export type ChatRole = "user" | "assistant";
+export type ChatMsg = { role: ChatRole; content: string };
+export type Brainstorm = { id: string; title: string; createdAt: string; messages: ChatMsg[] };

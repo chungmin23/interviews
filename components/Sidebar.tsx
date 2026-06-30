@@ -41,6 +41,12 @@ export default function Sidebar() {
         >
           내 이력서
         </Link>
+        <Link
+          href="/brainstorm"
+          className={`block rounded px-2 py-1 -mx-2 ${pathname.startsWith("/brainstorm") ? "bg-accent/10 text-accent font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+        >
+          경험 브레인스토밍
+        </Link>
       </div>
 
       {docs.length === 0 ? (
