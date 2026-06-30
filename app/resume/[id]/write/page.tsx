@@ -11,6 +11,17 @@ import { useDoc } from "@/lib/useDoc";
 import { getMaster } from "@/lib/storage";
 import { postStream } from "@/lib/client";
 
+const SEP = "===SELECTION_REASON===";
+// 스트림을 이력서 본문과 선택 이유로 분리. 구분자가 토막나 들어와도 깜빡임 없이 처리.
+function splitReason(acc: string): { resume: string; reason: string | null } {
+  const idx = acc.indexOf(SEP);
+  if (idx !== -1) return { resume: acc.slice(0, idx).trimEnd(), reason: acc.slice(idx + SEP.length).replace(/^\s+/, "") };
+  for (let n = Math.min(SEP.length - 1, acc.length); n > 0; n--) {
+    if (acc.endsWith(SEP.slice(0, n))) return { resume: acc.slice(0, acc.length - n), reason: null };
+  }
+  return { resume: acc, reason: null };
+}
+
 export default function WritePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const ui = useUI();
@@ -37,7 +48,7 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
       await postStream(
         "/api/generate",
         { masterResume: master.text, jobPosting: doc.jobPosting, analysis: doc.analysis },
-        (t) => { acc += t; save({ ...doc, resumeMd: acc }); }
+        (t) => { acc += t; const { resume, reason } = splitReason(acc); save({ ...doc, resumeMd: resume, selectionReason: reason }); }
       );
     } catch (e) { ui.toast("생성 실패: " + (e as Error).message, "error"); }
     finally { setBusy(false); }
@@ -96,6 +107,13 @@ export default function WritePage({ params }: { params: Promise<{ id: string }> 
             </div>
           )}
         {doc.resumeMd && <PrintResume md={doc.resumeMd} />}
+        {doc.selectionReason && (
+          <section className="card border-accent/30">
+            <h2 className="mb-2">이 경험을 선택한 이유</h2>
+            <p className="help mb-2">공고 요건과 마스터 이력서를 매칭해 위 경험을 고른 근거예요. (이력서/PDF에는 포함되지 않아요)</p>
+            <MarkdownView md={doc.selectionReason} />
+          </section>
+        )}
         {doc.interviewMd && (
           <section className="card">
             <h2 className="mb-2">면접 예상 질문</h2>
