@@ -4,6 +4,8 @@ import { checkAndCount } from "@/lib/ratelimit";
 import { assertWithinLimits } from "@/lib/validate";
 import { getClientIp } from "@/lib/http";
 
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   const { resumeText, jobPosting } = await req.json();
   try { assertWithinLimits({ resumeText, jobPosting }); }
