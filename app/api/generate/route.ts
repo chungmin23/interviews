@@ -1,4 +1,4 @@
-import { streamChat } from "@/lib/openai";
+import { streamChat, modelFor } from "@/lib/openai";
 import { GENERATE_SYSTEM } from "@/lib/prompts/generate";
 import { checkAndCount } from "@/lib/ratelimit";
 import { assertWithinLimits } from "@/lib/validate";
@@ -11,6 +11,6 @@ export async function POST(req: Request) {
   if (!checkAndCount(getClientIp(req)).ok) return new Response("RATE_LIMITED", { status: 429 });
 
   const user = `[채용공고]\n${jobPosting}\n\n[검토자 분석]\n${analysis}\n\n[마스터 이력서 풀]\n${masterResume}`;
-  const stream = await streamChat(GENERATE_SYSTEM, user);
+  const stream = await streamChat(GENERATE_SYSTEM, user, { model: modelFor("generate") });
   return new Response(stream, { headers: { "content-type": "text/plain; charset=utf-8" } });
 }
